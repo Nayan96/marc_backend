@@ -10,22 +10,6 @@ const {
 
 const {QuestionAnswers, Chapter, Question, User, UserChapter, ChapterQuestions, Option } = require("../db/models");
 
-const getUser = async (userAddress) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const user = await User.findOne({ userAddress });
-      if (user) {
-        return resolve(user);
-      } else {
-        const _user = new User({ userAddress });
-        await _user.save();
-        return resolve(_user);
-      }
-    } catch (err) {
-      reject(err);
-    }
-  });
-};
 
 const checkUserOwning = async (chapters, user) => {
     return new Promise(async (resolve, reject) => {
@@ -65,9 +49,9 @@ const checkUserOwning = async (chapters, user) => {
 router.post("/", async (req, res) => {
   const { userAddress } = req.body;
   try {
-    const user = await getUser(userAddress);
+    const user = await User.find({userAddress});
     const chapters = await Chapter.find({});
-    await checkUserOwning(chapters, user);
+    await checkUserOwning(chapters, user[0]);
     const result_userChapters = await UserChapter.find({
       userId: user.id,
     }).populate('chapter', null, null, { sort: { 'title': -1 } })
@@ -83,8 +67,8 @@ router.post('/:id/questions',async(req,res)=>{
     const chapterId = req.params.id;
     const {userId} = req.body;
     const user = await User.findById(userId);
+    console.log(user);
     const userChapter = await UserChapter.find({user:userId,chapter:chapterId});
-    console.log(userChapter);
     const chapter = await Chapter.findById(chapterId);
     const questions = await ChapterQuestions.find({
       chapter:chapterId,

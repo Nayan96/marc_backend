@@ -49,9 +49,9 @@ router.post("/seed_options", async (req, res) => {
 
 router.post("/seed_chapters", async (req, res) => {
   try {
-
     for await (const chapter of Chapters){
-        if(! ( await Chapter.exists({title:chapter.title}))){ 
+      const {title} = chapter;
+        if((!(await Chapter.exists({title:chapter.title}))) && title.split(":")[1].includes("Chapter") ){ 
           await Chapter.create(chapter);
         }
     }
