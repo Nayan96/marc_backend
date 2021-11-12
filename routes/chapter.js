@@ -83,7 +83,8 @@ router.post('/:id/questions',async(req,res)=>{
     const chapterId = req.params.id;
     const {userId} = req.body;
     const user = await User.findById(userId);
-    const userChapter = await UserChaptexr.find({user:userId,chapter:chapterId});
+    const userChapter = await UserChapter.find({user:userId,chapter:chapterId});
+    console.log(userChapter);
     const chapter = await Chapter.findById(chapterId);
     const questions = await ChapterQuestions.find({
       chapter:chapterId,
