@@ -1,8 +1,10 @@
 require("dotenv").config();
 var express = require("express");
+const { Schema, SchemaType } = require("mongoose");
 var router = express.Router();
 const Web3 = require("web3");
 
+var ObjectId = require('mongoose').Types.ObjectId; 
 const {
   tokenContractAddress,
   abi
@@ -24,15 +26,15 @@ const checkUserOwning = async (chapters, user) => {
             .call();
           const owned = balance > 0 ? true : false;
           const exists = await UserChapter.exists({
-            user: user.id,
-            chapter: chapter.id,
+            user:  ObjectId(user.id),
+            chapter:  ObjectId(chapter.id),
           });
           if (exists) {
-            await UserChapter.findOneAndUpdate({user:user.id,chapter:chapter.id},{owned,count:balance});
+            await UserChapter.findOneAndUpdate({user:  ObjectId(user.id), chapter:  ObjectId(chapter.id)},{owned,count:balance});
           } else {
             const userChapter = new UserChapter({
-              user: user.id,
-              chapter: chapter.id,
+              user:  ObjectId(user.id),
+              chapter:  ObjectId(chapter.id),
               owned,
             });
             await userChapter.save();
@@ -49,12 +51,22 @@ const checkUserOwning = async (chapters, user) => {
 router.post("/", async (req, res) => {
   const { userAddress } = req.body;
   try {
-    const user = await User.find({userAddress});
+    const user = await User.findOne({userAddress});
+    console.log(user);
     const chapters = await Chapter.find({});
-    await checkUserOwning(chapters, user[0]);
+    await checkUserOwning(chapters, user);
+
     const result_userChapters = await UserChapter.find({
-      userId: user.id,
-    }).populate('chapter', null, null, { sort: { 'title': -1 } })
+      user: new ObjectId(user.id),
+    }).populate(
+      {
+        path:'chapter',
+        model:Chapter,
+        match:{
+          user:{ $eq:new ObjectId(user.id)}
+        }
+      }
+    ).exec();
     return res.json({ ok: true, rows:result_userChapters, message: null });
   } catch (err) {
     console.log(err);
@@ -67,7 +79,6 @@ router.post('/:id/questions',async(req,res)=>{
     const chapterId = req.params.id;
     const {userId} = req.body;
     const user = await User.findById(userId);
-    console.log(user);
     const userChapter = await UserChapter.find({user:userId,chapter:chapterId});
     const chapter = await Chapter.findById(chapterId);
     const questions = await ChapterQuestions.find({

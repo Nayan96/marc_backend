@@ -8,15 +8,7 @@ router.get('/', function(req, res, next) {
 router.post('/',async(req,res)=>{
   const {userAddress} = req.body;
   try{
-    console.log(userAddress);
     const user = await getUser(userAddress);
-    // if(await User.exists({userAddress})){
-    //   const user = await User.find({userAddress})
-    //   return res.json({ok:true,message:null,rows:user})
-    // }else{
-    //   const user = await User.create({userAddress});
-    //   return res.json({ok:true,message:null,rows:user})
-    // }
     return res.json({ok:true,message:null,rows:user})
   }catch(err){
     console.log(err);

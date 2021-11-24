@@ -14,7 +14,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-
+mongoose.set('debug', true);
 mongoose.connect(process.env.MONGO_URL,(err)=>{
     if(err)
         console.log(err);
