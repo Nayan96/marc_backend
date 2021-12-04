@@ -95,7 +95,6 @@ router.post("/submit_answer", async (req, res) => {
         correct:db_question.answer.id == db_user_answer._id
       })
     }
-    console.log("userAnser", user_answered);
     let corrects = user_answered.filter(t=>t.correct).length;
 
     const db_userChapter = await UserChapter.findOneAndUpdate(
@@ -108,11 +107,9 @@ router.post("/submit_answer", async (req, res) => {
     const db_user = await User.findById(userId);
     const target = process.env.TARGET;
     if(corrects === user_answered.length){
-      // await sendMail(target,db_user.userAddress);
-      console.log("Passed")
+      await sendMail(target,db_user.userAddress);
       return res.json({ ok: true, message: "PASSED", rows: [] });
     }else{
-      console.log("Failed");
       return res.json({ ok: true, message:"FAILED", rows: [] });
     }
   } catch (err) {
