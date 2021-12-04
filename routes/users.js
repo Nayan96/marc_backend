@@ -11,7 +11,6 @@ router.post('/',async(req,res)=>{
     const user = await getUser(userAddress);
     return res.json({ok:true,message:null,rows:user})
   }catch(err){
-    console.log(err);
     return res.json({ok:false,message:err,rows:null})
   }
 })

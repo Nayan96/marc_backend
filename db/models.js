@@ -3,8 +3,8 @@ const { Schema } = mongoose;
 
 
 const optionSchema = new Schema({
-    label:String,
-    value:String
+    value:String,
+    label:String
 })
 
 const Option = mongoose.model('Options',optionSchema);
@@ -24,7 +24,6 @@ const questionSchema = new Schema({
         type:Schema.Types.ObjectId,
         ref:Option
     },
-    options:[{type:Schema.Types.ObjectId,ref:Option}]
 })
 const Question = mongoose.model('Questions',questionSchema);
 
@@ -59,10 +58,6 @@ const QuestionAnswerSchema = new Schema({
         ref:Option,
         default:null
     },
-    options:[{
-        type:Schema.Types.ObjectId,
-        ref:Option
-    }]
 })
 
 const QuestionAnswers = mongoose.model('QuestionAnswers',QuestionAnswerSchema);

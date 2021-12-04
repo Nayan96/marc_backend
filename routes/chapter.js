@@ -52,7 +52,6 @@ router.post("/", async (req, res) => {
   const { userAddress } = req.body;
   try {
     const user = await User.findOne({userAddress});
-    console.log(user);
     const chapters = await Chapter.find({});
     await checkUserOwning(chapters, user);
 
@@ -69,18 +68,19 @@ router.post("/", async (req, res) => {
     ).exec();
     return res.json({ ok: true, rows:result_userChapters, message: null });
   } catch (err) {
-    console.log(err);
     return res.json({ ok: false, rows: [], message: err });
   }
 });
 
 router.post('/:id/questions',async(req,res)=>{
   try{
+
     const chapterId = req.params.id;
     const {userId} = req.body;
     const user = await User.findById(userId);
     const userChapter = await UserChapter.find({user:userId,chapter:chapterId});
     const chapter = await Chapter.findById(chapterId);
+
     const questions = await ChapterQuestions.find({
       chapter:chapterId,
       user:userId,
@@ -95,10 +95,6 @@ router.post('/:id/questions',async(req,res)=>{
             model:Question
           },
           {
-            path:'options',
-            model:Option
-          },
-          {
             path:'userResponse',
             model:Option,
           }
@@ -107,23 +103,17 @@ router.post('/:id/questions',async(req,res)=>{
     )
 
     if(questions.length===0){
-        const questions = await Question.find({}).populate({
-          path:'options',
-          model:Option
-        })
+        const questions = await Question.find({})
         let _questions = [];
         for await ( const question of questions){
-          const options = question.options.map(q=>q.id);
-          console.log(options);
           const questionAnswer = new QuestionAnswers({
-            question:question.id,
-            options
+            question:question.id
           });
           await questionAnswer.save();
           _questions.push(questionAnswer);
         }
         const chapterQuestion = new ChapterQuestions({
-          user:user.id,
+          user:user._id,
           chapter:chapter.id,
           questions:_questions
         })
@@ -143,10 +133,6 @@ router.post('/:id/questions',async(req,res)=>{
                 model:Question
               },
               {
-                path:'options',
-                model:Option
-              },
-              {
                 path:'userResponse',
                 model:Option,
               }
@@ -157,7 +143,6 @@ router.post('/:id/questions',async(req,res)=>{
     }
     return res.json({ok:true,rows:questions,message:null});
   }catch(err){  
-    console.log(err);
     return res.json({ok:false,message:err,rows:[]});
   }
 }) 

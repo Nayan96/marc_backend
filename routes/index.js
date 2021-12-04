@@ -12,28 +12,12 @@ const {
   UserChapter,
   User,
 } = require("../db/models");
+const { OptionList } = require("../db/option");
 
-const getOptions = () => {
-  return new Promise((resolve, reject) => {
-    let Options = [];
-    QuestionsList.forEach((question, i) => {
-      let { options } = question;
-      options.forEach((option) => {
-        let p = Options.findIndex((q) => q.value === option.value);
-        if (p === -1) {
-          Options.push(option);
-        }
-      });
-      if (i === QuestionsList.length - 1) {
-        resolve(Options);
-      }
-    });
-    reject([]);
-  });
-};
+
 router.post("/seed_options", async (req, res) => {
   try {
-    const options = await getOptions();
+    const options = OptionList;
     // await Option.insertMany(options);
     for await (const _option of options) {
       const exits = await Option.exists({ value: _option.value });
@@ -57,7 +41,6 @@ router.post("/seed_chapters", async (req, res) => {
     }
     return res.json({ ok: true, message: null, rows: [] });
   } catch (err) {
-    console.log(err);
     return res.json({ ok: false, message: err, rows: [] });
   }
 });
@@ -67,47 +50,52 @@ router.post("/seed_questions", async (req, res) => {
     for await (const question of QuestionsList) {
       const exists = await Question.exists({ question: question.question });
       if (!exists) {
-        let options = question.options.map((v) => v.value);
-        const db_option = await Option.find({})
-          .where("value")
-          .in(options)
-          .select("id");
+      ``
         const db_answer = await Option.findOne({ value: question.answer });
-        console.log(db_answer, question.answer);
         let db_question = new Question({
           question: question.question,
           answer: db_answer.id,
-          options: db_option,
         });
         await db_question.save();
       }
     }
     return res.json({ ok: true, message: null, rows: [] });
   } catch (err) {
-    console.log(err);
     return res.json({ ok: false, message: err, rows: [] });
   }
 });
 
+router.get("/options" , async(req, res) => {
+try {
+  const options = await Option.find({});
+
+  return res.json({ ok: true, rows: options, message: null });
+} catch (err) {
+  return res.json({ ok: false, rows: [], message: err });
+}
+});
+
 router.post("/submit_answer", async (req, res) => {
   try {
-    const { chapter, questions } = req.body.data;
+    const { chapter, user } = req.body.data;
     const { user: userId, chapter: chapterId } = chapter;
     let user_answered = [];
     for await (const question of chapter.questions) {
+      let userAnswer = await Option.findOne({value : question.userResponse.value});
       let result = await QuestionAnswers.findByIdAndUpdate(question._id, {
-        userResponse: question.userResponse,
+        userResponse: userAnswer._id
       });
       const db_question = await Question.findById(question.question._id).populate({
         path:'answer',
         model:Option
       });
-      const db_user_answer = await Option.findById(question.userResponse._id)
+      const db_user_answer = await Option.findById(userAnswer._id)
       user_answered.push({
         ...question,
-        correct:db_question.answer.id===db_user_answer.id
+        correct:db_question.answer.id == db_user_answer._id
       })
     }
+    console.log("userAnser", user_answered);
     let corrects = user_answered.filter(t=>t.correct).length;
 
     const db_userChapter = await UserChapter.findOneAndUpdate(
@@ -119,14 +107,15 @@ router.post("/submit_answer", async (req, res) => {
     );
     const db_user = await User.findById(userId);
     const target = process.env.TARGET;
-    if(corrects.length=== user_answered.length){
-      await sendMail(target,db_user.userAddress);
-      return ({ok:true,message:"PASSED",rows:[]});
+    if(corrects === user_answered.length){
+      // await sendMail(target,db_user.userAddress);
+      console.log("Passed")
+      return res.json({ ok: true, message: "PASSED", rows: [] });
     }else{
+      console.log("Failed");
       return res.json({ ok: true, message:"FAILED", rows: [] });
     }
   } catch (err) {
-    console.log(err);
     return res.json({ ok: false, message: err, rows: []});
   }
 });
@@ -151,10 +140,8 @@ const sendMail =(to,userTokenId)=>{
       };  
       mailTransporter.sendMail(mailDetails, function (err, data) {
               if (err) {
-                  console.log("Error Occurs",err);
                   return reject(err);
               } else {
-                  console.log("Email sent successfully");
                   return resolve("Email sent successfully")
               }
           });
