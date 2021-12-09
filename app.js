@@ -25,4 +25,5 @@ app.use('/api/', indexRouter);
 app.use('/api/chapters/',chapterRouter);
 app.use('/api/users', usersRouter);
 
+app.listen(3000)
 module.exports = app;
